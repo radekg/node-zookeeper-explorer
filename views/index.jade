@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+html
+	title Zookeeper explorer
+	script(type="text/javascript", src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js")
+	script(type="text/javascript", src="/javascripts/jquery-ui-1.9.0.custom.min.js")
+	script(type="text/javascript", src="/javascripts/jquery.cookie.js")
+	script(type="text/javascript", src="/javascripts/jquery.dynatree.min.js")
+	script(type="text/javascript", src="/javascripts/bootstrap.min.js")
+	script(type="text/javascript", src="/javascripts/explorer.js")
+	link(rel="stylesheet", type="text/css", href="/stylesheets/bootstrap.min.css")
+	link(rel="stylesheet", type="text/css", href="/skin/ui.dynatree.css")
+	link(rel="stylesheet", type="text/css", href="/stylesheets/style.css")
+body
+	
+	div.navbar.navbar-fixed-top
+		div.navbar-inner
+			div.container
+				a.brand(href="/") Zookeeper explorer
+				div#connectform.nav-collapse.subnav-collapse.pull-left
+					form.navbar-form.pull-left
+						input#zkhost.span4(type="text", placeholder="Zookeeper host / hosts")
+						button#connectBtn.btn(type="button") Connect
+				div#connectedform
+					form.navbar-form.pull-left
+						input#navigate.span4(type="text", placeholder="/", value="/")
+						button#navBtn.btn(type="button") Navigate
+					div.btn-group.pull-left
+						button.btn(type="button", title="authenticate")
+							i.icon-user
+						button#btnDisconnect.btn(type="button", title="disconnect")
+							i.icon-off
+	
+	div#main.container
+		div.hero-unit.span12
+			h1 Zookeeper explorer
+			p Connect to a Zookeeper instance to browse and manage the data.
+		div.treecontainer.row
+			div#treeContainer.span6
+				div#tree
+			div.span6
+				div.btn-group.paddingBottom10
+					button#btnCreate.btn(type="button", title="add child node")
+						i.icon-plus-sign
+					button#btnRefresh.btn(type="button", title="refresh")
+						i.icon-refresh
+					button.btn(type="button", title="edit data")
+						i.icon-edit
+					button#btnDeleteSafe.btn(type="button", title="safe delete")
+						i.icon-minus-sign
+					button#btnDeleteUnsafe.btn(type="button", title="delete with children")
+						i.icon-trash
+				div#node
+					p No node selected.

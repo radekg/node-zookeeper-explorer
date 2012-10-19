@@ -1,0 +1,33 @@
+body {
+  padding: 50px;
+}
+#connectedform {
+	display: none;
+}
+.treecontainer {
+	display: none;
+}
+ul.dynatree-container {
+	border: none;
+	overflow: hidden;
+}
+
+.form-horizontal .control-label {
+	padding-top: 0;
+}
+.form-horizontal .control-group {
+	margin-bottom: 0;
+}
+label {
+	margin-bottom: 0;
+}
+.paddingBottom10 {
+	padding-bottom: 10px;
+}
+#treeContainer {
+	width: 500px;
+	height: 500px;
+	clip: rect(0, 500px, 500px, 0);
+	overflow-y: scroll;
+	overflow-x: hidden;
+}
