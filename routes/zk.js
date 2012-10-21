@@ -90,14 +90,34 @@ exports.deleteUnsafe = function(req, res) {
 
 exports.create = function(req, res) {
 	var rootPath = req.param("path");
-	if ( rootPath == "/" ) {
-		rootPath = "";
+	if ( rootPath == "/" ) { rootPath = ""; }
+	_$createNodes( req.app.ZK, rootPath, req.param("nodename").split("/"), null, function(status) {
+		res.json(status);
+	});
+}
+
+var _$createNodes = function(zk, parent, nodes, laststatus, callback) {
+	var _nodes = nodes;
+	if ( _nodes.length > 0 ) {
+		var item = _nodes.shift();
+		_$createNode(zk, parent, item, function(data) {
+			if ( data.status == "ok" ) {
+				_$createNodes(zk, data.path, _nodes, data, callback);
+			} else {
+				callback(data);
+			}
+		});
+	} else {
+		callback(laststatus);
 	}
-	req.app.ZK.a_create( rootPath+"/"+req.param("nodename"), "", null, function(rc, error, path) {
+}
+
+var _$createNode = function(zk, parent, newnode, callback) {
+	zk.a_create( parent+"/"+newnode, "", null, function(rc, error, path) {
 		if ( rc == 0 ) {
-			res.json({ status: "ok", target: req.param("path"), path: rootPath+"/"+req.param("nodename"), newnode: req.param("nodename") });
+			callback( { status: "ok", path: parent+"/"+newnode, newnode: newnode } );
 		} else {
-			res.json({ status: "error", error: error, path: rootPath+"/"+req.param("nodename") });
+			callback( { status: "error", error: error, path: parent+"/"+newnode } );
 		}
 	});
 }

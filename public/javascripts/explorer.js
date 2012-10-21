@@ -62,7 +62,11 @@ $(function() {
 		} else {
 			deleteSafe( getPathFromRoot( treeSelectedNode ), function( data) {
 				if ( data.status == "ok" ) {
+					var parent = treeSelectedNode.parent;
 					treeSelectedNode.parent.removeChild(treeSelectedNode);
+					if ( !parent.hasChildren() ) {
+						parent.addChild({ isFolder: false, title: "no children", hideCheckbox: true });
+					}
 					treeSelectedNode = null;
 					$("#node").empty();
 					$("#node").append("<p>No node selected.</p>");
@@ -145,11 +149,15 @@ function displayUnsafeDeleteConfirmation() {
 		+ "</div>");
 	$("#btnUnsafeDeleteConfirm").click(function() {
 		deleteUnsafe( getPathFromRoot( treeSelectedNode ), function(data) {
+			var parent = treeSelectedNode.parent;
 			treeSelectedNode.parent.removeChild(treeSelectedNode);
-					treeSelectedNode = null;
-					$("#node").empty();
-					$("#node").append("<p>No node selected.</p>");
-					displaySuccess("Node " + data.path + " removed with children.");
+			if ( !parent.hasChildren() ) {
+				parent.addChild({ isFolder: false, title: "no children", hideCheckbox: true });
+			}
+			treeSelectedNode = null;
+			$("#node").empty();
+			$("#node").append("<p>No node selected.</p>");
+			displaySuccess("Node " + data.path + " removed with children.");
 		});
 	});
 	$("#btnUnsafeDeleteCancel").click(function() {
@@ -186,7 +194,7 @@ function displayNewNodeForm() {
 			create(path, $("#newNodeName").val(), function(data) {
 				if ( data.status == "ok" ) {
 					displaySuccess("Node " + data.path + " created sucessfully.");
-					if ( data.target == "/" ) {
+					if ( treeSelectedNode == null ) {
 						$("#tree").dynatree('destroy');
 						constructNewTree();
 					} else {
