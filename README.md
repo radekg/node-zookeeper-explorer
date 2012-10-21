@@ -1,6 +1,6 @@
 # Zookeeper explorer for NodeJS
 
-A Zookeeper management web application for NodeJS. Implemented with [expressjs](http://expressjs.com/), [node-zookeeper](https://github.com/yfinkelstein/node-zookeeper) and [dynatree](http://code.google.com/p/dynatree/).
+Zookeeper management web application for NodeJS. Implemented with [expressjs](http://expressjs.com/), [node-zookeeper](https://github.com/yfinkelstein/node-zookeeper), [socket.io](http://socket.io), [jQuery](http://jquery.com), [jQuery cookie](https://github.com/carhartl/jquery-cookie), [Twitter Bootstrap](http://twitter.github.com/bootstrap/) and [dynatree](http://code.google.com/p/dynatree/).
 
 # Installation
 
@@ -12,6 +12,8 @@ Or from sources:
     cd node-zookeeper-explorer
     git clone git@github.com:radekg/node-zookeeper-explorer.git .
     npm install
+
+This app was built and tested with node 0.8.9.
 
 # Running
 
@@ -39,4 +41,5 @@ Full status can be check in [Issues](https://github.com/radekg/node-zookeeper-ex
 
 # License
 
-MIT license
+MIT
+unless stated otherwise in an appropriate file.
