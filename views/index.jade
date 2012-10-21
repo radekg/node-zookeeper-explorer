@@ -19,7 +19,7 @@ body
 				div#connectform.nav-collapse.subnav-collapse.pull-left
 					form.navbar-form.pull-left
 						input#zkhost.span4(type="text", placeholder="Zookeeper host / hosts")
-						button#connectBtn.btn(type="button") Connect
+						button#btnConnect.btn(type="button") Connect
 				div#connectedform
 					form.navbar-form.pull-left
 						input#navigate.span4(type="text", placeholder="/", value="/")
@@ -34,6 +34,7 @@ body
 		div.hero-unit.span12
 			h1 Zookeeper explorer
 			p Connect to a Zookeeper instance to browse and manage the data.
+			div#zkhistory
 		div.treecontainer.row
 			div#treeContainer.span6
 				div#tree

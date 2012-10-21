@@ -1,12 +1,16 @@
+Array.prototype.remove = function(from, to) {
+	var rest = this.slice((to || from) + 1 || this.length);
+	this.length = from < 0 ? this.length + from : from;
+	return this.push.apply(this, rest);
+};
+
 var treeSelectedNodes;
 var treeSelectedNode;
 $(function() {
 	
-	if ( $.cookie("lastzkhost") != null ) {
-		$("#zkhost").val( $.cookie("lastzkhost") );
-	}
+	getConnectionHistory();
 	
-	$("#connectBtn").click(function() {
+	$("#btnConnect").click(function() {
 		var hosts = $("#zkhost").val().split(",");
 		hosts.forEach(function(host, i) {
 			if ( host.indexOf(":") < 0 ) {
@@ -17,7 +21,7 @@ $(function() {
 		$.post("/zk/connect", { zkhost: $("#zkhost").val() }, function (data) {
 			if ( data.status == "ok" ) {
 				
-				$.cookie("lastzkhost", $("#zkhost").val())
+				setConnectionHistory($("#zkhost").val());
 				
 				displaySuccess("Successfully connected to Zookeeper: " + $("#zkhost").val() + ".");
 				$("#connectform").hide();
@@ -337,4 +341,41 @@ function create(path, nodename, callback) {
 	$.post("/zk/create", { path: path, nodename: nodename }, function (data) {
 		callback(data);
 	});
+}
+
+function getConnectionHistory() {
+	var history = $.cookie("zkhistory");
+	if ( history != null ) {
+		history = history.split("^");
+		if ( history.length > 0 ) {
+			$("#zkhost").val( history[0] );
+		}
+		$("#zkhistory").empty();
+		$("#zkhistory").append("<p>Recent connections:</p>");
+		var html = "<ol>";
+		history.forEach(function(entry) {
+			html += "<li><a href='#' class='history' data='" + entry + "'>" + entry + "</a></li>";
+		});
+		html += "</ol>";
+		$("#zkhistory").append(html);
+		$(".history").click(function(event) {
+			event.preventDefault();
+			$("#zkhost").val( $(this).attr("data") );
+			$("#btnConnect").trigger("click");
+		});
+	}
+}
+
+function setConnectionHistory(hosts) {
+	var history = $.cookie("zkhistory");
+	if ( history != null ) {
+		history = history.split("^");
+		if ( history.indexOf(hosts) > -1 ) {
+			history.remove( history.indexOf(hosts) );
+		}
+		history.unshift( hosts );
+		$.cookie("zkhistory", history.join("^"), { expires: 365 });
+	} else {
+		$.cookie("zkhistory", hosts, { expires: 365 });
+	}
 }
