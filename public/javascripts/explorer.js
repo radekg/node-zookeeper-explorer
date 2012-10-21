@@ -102,12 +102,18 @@ $(function() {
 	});
 	
 	$("#btnCreate").click(function() {
-		if ( treeSelectedNode == null ) {
-			alert("add node to root...");
-		} else {
-			displayNewNodeForm();
-		}
+		displayNewNodeForm();
 	});
+	
+	$("#btnEditData").click(function() {
+		if ( treeSelectedNode == null ) {
+			displayError("No node selected, no data to modify.")
+		} else {
+			get(getPathFromRoot( treeSelectedNode ), function(data) {
+				displayDataModificationForm(data.data, data.stat.version);
+			});
+		}
+	})
 	
 });
 
@@ -155,25 +161,84 @@ function displayNewNodeForm() {
 	$(".alert").remove();
 	$("#main").prepend("<div class='alert alert-block alert-success new-node'>"
 		+ "<h4>Create new child</h4>"
-		+ "You are about to add new child to " + getPathFromRoot( treeSelectedNode ) + "<br/>"
+		+ "You are about to add new child to " + getPathFromRoot( (treeSelectedNode == null ? $("#tree").dynatree('getRoot') : treeSelectedNode ) ) + "<br/>"
 		+ "Name of the new node: <input type='text' id='newNodeName' placeholder='a_name' /><br/>"
 		+ "<button id='btnNewNodeCreate' class='btn btn-primary' type='button'>Create</button> "
 		+ "<button id='btnNewNodeCancel' class='btn' type='button'>Cancel</button>"
 		+ "</div>");
+	setTimeout(function() {
+		$("#newNodeName").focus();
+		$("#newNodeName").keydown(function(event) {
+			if ( event.which == 13 ) {
+				$("#btnNewNodeCreate").trigger('click');
+			}
+			if ( event.which == 27 ) {
+				$("#btnNewNodeCancel").trigger('click');
+			}
+		});
+	}, 100);
+	
 	$("#btnNewNodeCreate").click(function() {
 		if ($("#newNodeName").val() == "") {
 			displayError("Node name can't be empty.");
 		} else {
-			create(getPathFromRoot( treeSelectedNode ), $("#newNodeName").val(), function(data) {
+			var path = getPathFromRoot( treeSelectedNode == null ? $("#tree").dynatree('getRoot') : treeSelectedNode );
+			create(path, $("#newNodeName").val(), function(data) {
 				if ( data.status == "ok" ) {
 					displaySuccess("Node " + data.path + " created sucessfully.");
-					treeSelectedNode.addChild({ title: data.newnode, isFolder: true, children: [ { title: "loading...", hideCheckbox: true } ] });
+					if ( data.target == "/" ) {
+						$("#tree").dynatree('destroy');
+						constructNewTree();
+					} else {
+						treeSelectedNode.addChild({ title: data.newnode, isFolder: true, children: [ { title: "loading...", hideCheckbox: true } ] });
+					}
 				} else {
 					displayError("Node " + data.path + " not created. Source error: '" + data.error + "'.");
 				}
 			});
 		}
-	})
+	});
+	$("#btnNewNodeCancel").click(function() {
+		$(".new-node").remove();
+	});
+}
+
+function displayDataModificationForm(currentData, currentVersion) {
+	$(".alert").remove();
+	$("#main").prepend("<div class='alert alert-block alert-success data-modification'>"
+		+ "<h4>Edit node data</h4>"
+		+ "Modify the data for node " + getPathFromRoot( treeSelectedNode ) + "<br/>"
+		+ "<input type='hidden' id='nodeVersion' value='" + currentVersion + "' />"
+		+ "New data: <input type='text' id='nodeData' placeholder='" + ((currentData=="") ? "<no data>" : currentData ) + "' /><br/>"
+		+ "<button id='btnUpdateDataConfirm' class='btn btn-primary' type='button'>Update data</button> "
+		+ "<button id='btnUpdateDataCancel' class='btn' type='button'>Cancel</button>"
+		+ "</div>");
+	setTimeout(function() {
+		$("#nodeData").focus();
+		$("#nodeData").keydown(function(event) {
+			if ( event.which == 13 ) {
+				$("#btnUpdateDataConfirm").trigger('click');
+			}
+			if ( event.which == 27 ) {
+				$("#btnUpdateDataCancel").trigger('click');
+			}
+		});
+	}, 100);
+	
+	$("#btnUpdateDataConfirm").click(function() {
+		set(getPathFromRoot( treeSelectedNode ), $("#nodeData").val(), $("nodeVersion").val(), function(data) {
+			if ( data.status == "ok" ) {
+				displaySuccess("Data for node " + data.path + " updated sucessfully.");
+				loadNodeStatsAndData(treeSelectedNode);
+			} else {
+				displayError("Data for node " + data.path + " not updated. Source error: '" + data.error + "'.");
+			}
+		});
+	});
+	
+	$("#btnUpdateDataCancel").click(function() {
+		$(".data-modification").remove();
+	});
 }
 
 function constructNewTree() {
@@ -216,6 +281,7 @@ function constructNewTree() {
 function loadNodeStatsAndData(node) {
 	$(".unsafe-confirm").remove();
 	$(".new-node").remove();
+	$(".data-modification").remove();
 	treeSelectedNode = node;
 	var path = getPathFromRoot( node );
 	get(path, function(data) {
@@ -241,6 +307,11 @@ function exists(path, callback) {
 }
 function get(path, callback) {
 	$.post("/zk/get", { path: path }, function (data) {
+		callback(data);
+	});
+}
+function set(path, nodedata, version, callback) {
+	$.post("/zk/set", { path: path, data: nodedata, version: version }, function (data) {
 		callback(data);
 	});
 }

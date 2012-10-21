@@ -62,6 +62,16 @@ exports.get = function(req, res) {
 	})
 };
 
+exports.set = function(req, res) {
+	req.app.ZK.a_set(req.param("path"), req.param("data"), parseInt(req.param("version")+""), function(rc,error,stat) {
+		if ( rc == 0 ) {
+			res.json({ status: "ok", path: req.param("path") });
+		} else {
+			res.json({ status: "error", error: error, path: req.param("path") });
+		}
+	})
+};
+
 exports.deleteSafe = function(req, res) {
 	req.app.ZK.a_delete_(req.param("path"), -1, function(rc, err) {
 		if ( err == "not empty" ) {
@@ -79,11 +89,15 @@ exports.deleteUnsafe = function(req, res) {
 }
 
 exports.create = function(req, res) {
-	req.app.ZK.a_create( req.param("path")+"/"+req.param("nodename"), "", null, function(rc, error, path) {
+	var rootPath = req.param("path");
+	if ( rootPath == "/" ) {
+		rootPath = "";
+	}
+	req.app.ZK.a_create( rootPath+"/"+req.param("nodename"), "", null, function(rc, error, path) {
 		if ( rc == 0 ) {
-			res.json({ status: "ok", path: req.param("path")+"/"+req.param("nodename"), newnode: req.param("nodename") });
+			res.json({ status: "ok", target: req.param("path"), path: rootPath+"/"+req.param("nodename"), newnode: req.param("nodename") });
 		} else {
-			res.json({ status: "error", error: error, path: req.param("path")+"/"+req.param("nodename") });
+			res.json({ status: "error", error: error, path: rootPath+"/"+req.param("nodename") });
 		}
 	});
 }
