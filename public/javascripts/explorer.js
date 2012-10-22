@@ -6,7 +6,44 @@ Array.prototype.remove = function(from, to) {
 
 var treeSelectedNodes;
 var treeSelectedNode;
+
+var currentSession;
+var currentConnection;
+var socket;
+
+var notifications = [];
+
 $(function() {
+	
+	socket = io.connect(location.protocol+"//"+location.hostname+(location.port=="")?"":":"+location.port);
+	socket.on("watcher_children", function(data) {
+		if ( data.session == currentSession && data.connection == currentConnection ) {
+			if ( getPathFromRoot( treeSelectedNode ) == data.path ) {
+				$("#btnRefresh").trigger("click");
+				notifications.unshift({ message: "Children for " + data.path + " have changed.", seen: false });
+				updateNotSeenCounter();
+			} else {
+				notifications.unshift({ message: "Children for " + data.path + " have changed.", seen: false });
+				updateNotSeenCounter();
+			}
+		}
+	});
+	socket.on("watcher_data", function(data) {
+		if ( data.session == currentSession && data.connection == currentConnection ) {
+			if ( getPathFromRoot( treeSelectedNode ) == data.path ) {
+				loadNodeStatsAndData( treeSelectedNode );
+				notifications.unshift({ message: "Data for " + data.path + " has changed.", seen: false });
+				updateNotSeenCounter();
+			} else {
+				notifications.unshift({ message: "Data for " + data.path + " has changed.", seen: false });
+				updateNotSeenCounter();
+			}
+		}
+	});
+	socket.on("disconnect", function() {
+		$("#btnDisconnect").trigger("click");
+		setTimeout(function() { displayError("Server has closed the connection.") }, 100);
+	});
 	
 	getConnectionHistory();
 	
@@ -20,6 +57,9 @@ $(function() {
 		$("#zkhost").val(hosts.join(","));
 		$.post("/zk/connect", { zkhost: $("#zkhost").val() }, function (data) {
 			if ( data.status == "ok" ) {
+				
+				currentSession = data.session;
+				currentConnection = data.connection;
 				
 				setConnectionHistory($("#zkhost").val());
 				
@@ -49,16 +89,17 @@ $(function() {
 		});
 	});
 	$("#btnDisconnect").click(function() {
-		$.post("/zk/disconnect", function(data) {
-			treeSelectedNodes = null;
-			$("#connectedform").hide();
-			$("#connectform").show();
-			$(".hero-unit").show();
-			$(".treecontainer").hide();
-			$("#tree").dynatree('destroy');
-			$("#tree").empty();
-			displaySuccess("Disconnected from Zookeeper.")
-		});
+		$.post("/zk/disconnect", function(data) {});
+		treeSelectedNodes = null;
+		$("#connectedform").hide();
+		$("#connectform").show();
+		$(".hero-unit").show();
+		$(".treecontainer").hide();
+		$("#tree").dynatree('destroy');
+		$("#tree").empty();
+		displaySuccess("Disconnected from Zookeeper.");
+		notification = [];
+		updateNotSeenCounter();
 	});
 	$("#btnDeleteSafe").click(function() {
 		if ( treeSelectedNode == null ) {
@@ -92,7 +133,6 @@ $(function() {
 		if ( treeSelectedNode == null ) {
 			$("#tree").dynatree("destroy");
 			constructNewTree();
-			displaySuccess("Tree reloaded from the root.");
 		} else {
 			treeSelectedNode.removeChildren();
 			get_children(getPathFromRoot( treeSelectedNode ), function(result) {
@@ -103,7 +143,6 @@ $(function() {
 						treeSelectedNode.addChild({ isFolder: true, title: child, children: [ { title: "loading...", hideCheckbox: true } ] });
 					});
 				}
-				displaySuccess("Node " + result.path + " reloaded successfully.");
 			});
 			loadNodeStatsAndData(treeSelectedNode);
 		}
@@ -121,11 +160,24 @@ $(function() {
 				displayDataModificationForm(data.data, data.stat.version);
 			});
 		}
-	})
+	});
+	
+	$("#btnWatch").click(function() {
+		if ( $(this).hasClass("active") ) {
+			$(this).removeClass("active");
+			watcherRemove( getPathFromRoot( (treeSelectedNode == null ? $("#tree").dynatree('getRoot') : treeSelectedNode ) ) );
+		} else {
+			$(this).addClass("active");
+			watcherRegister( getPathFromRoot( (treeSelectedNode == null ? $("#tree").dynatree('getRoot') : treeSelectedNode ) ) );
+		}
+	});
 	
 });
 
 function getPathFromRoot(node) {
+	if ( node == null ) {
+		return "/";
+	}
 	var elems = [];
 	var current = node;
 	while (current.data.title != null) {
@@ -198,12 +250,7 @@ function displayNewNodeForm() {
 			create(path, $("#newNodeName").val(), function(data) {
 				if ( data.status == "ok" ) {
 					displaySuccess("Node " + data.path + " created sucessfully.");
-					if ( treeSelectedNode == null ) {
-						$("#tree").dynatree('destroy');
-						constructNewTree();
-					} else {
-						treeSelectedNode.addChild({ title: data.newnode, isFolder: true, children: [ { title: "loading...", hideCheckbox: true } ] });
-					}
+					$("#btnRefresh").trigger("click");
 				} else {
 					displayError("Node " + data.path + " not created. Source error: '" + data.error + "'.");
 				}
@@ -238,7 +285,7 @@ function displayDataModificationForm(currentData, currentVersion) {
 	}, 100);
 	
 	$("#btnUpdateDataConfirm").click(function() {
-		set(getPathFromRoot( treeSelectedNode ), $("#nodeData").val(), $("nodeVersion").val(), function(data) {
+		set(getPathFromRoot( treeSelectedNode ), $("#nodeData").val(), $("#nodeVersion").val(), function(data) {
 			if ( data.status == "ok" ) {
 				displaySuccess("Data for node " + data.path + " updated sucessfully.");
 				loadNodeStatsAndData(treeSelectedNode);
@@ -294,9 +341,17 @@ function loadNodeStatsAndData(node) {
 	$(".unsafe-confirm").remove();
 	$(".new-node").remove();
 	$(".data-modification").remove();
+	$("#btnWatch").removeClass("active");
 	treeSelectedNode = node;
 	var path = getPathFromRoot( node );
 	get(path, function(data) {
+		
+		watcherExists(data.path, function(result) {
+			if ( result.status == "ok" ) {
+				$("#btnWatch").addClass("active");
+			}
+		});
+		
 		$("#node").empty();
 		$("#node").append("<p>Node:<br/><strong>" + data.path + "</strong></p>");
 		$("#node").append("<form class='form-horizontal' id='stats'></form>")
@@ -343,6 +398,24 @@ function create(path, nodename, callback) {
 	});
 }
 
+function watcherRegister(path, callback) {
+	$.post("/zk/watcher/register", { path: path }, function (data) {
+		if ( callback ) { callback(data); }
+	});
+}
+
+function watcherRemove(path, callback) {
+	$.post("/zk/watcher/remove", { path: path }, function (data) {
+		if ( callback ) { callback(data); }
+	});
+}
+
+function watcherExists(path, callback) {
+	$.post("/zk/watcher/exists", { path: path }, function (data) {
+		callback(data);
+	});
+}
+
 function getConnectionHistory() {
 	var history = $.cookie("zkhistory");
 	if ( history != null ) {
@@ -378,4 +451,14 @@ function setConnectionHistory(hosts) {
 	} else {
 		$.cookie("zkhistory", hosts, { expires: 365 });
 	}
+}
+
+function updateNotSeenCounter() {
+	var count = 0;
+	notifications.forEach(function(item) {
+		if ( !item.seen ) {
+			count++;
+		}
+	});
+	$(".badge-info").html(count);
 }

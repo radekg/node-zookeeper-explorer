@@ -19,6 +19,8 @@ app.configure(function(){
   app.use(express.logger('dev'));
   app.use(express.bodyParser());
   app.use(express.methodOverride());
+  app.use(express.cookieParser('zookeepr-explorer-secret'));
+  app.use(express.session());
   app.use(app.router);
   app.use(express.static(path.join(__dirname, 'public')));
 });
@@ -39,6 +41,17 @@ app.post('/zk/delete/unsafe', zk.deleteUnsafe);
 app.post('/zk/create', zk.create);
 app.post('/zk/set', zk.set);
 
+app.post('/zk/watcher/register', zk.watcherRegister);
+app.post('/zk/watcher/exists', zk.watcherExists);
+app.post('/zk/watcher/remove', zk.watcherRemove);
+
+app.zookeepers = {};
+app.watchers = {};
+
+var server = app.listen(3000);
+app.socketio = require("socket.io").listen(server);
+/*
 http.createServer(app).listen(app.get('port'), function(){
   console.log("Express server listening on port " + app.get('port'));
 });
+*/

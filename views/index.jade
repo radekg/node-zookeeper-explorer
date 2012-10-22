@@ -6,6 +6,7 @@ html
 	script(type="text/javascript", src="/javascripts/jquery.cookie.js")
 	script(type="text/javascript", src="/javascripts/jquery.dynatree.min.js")
 	script(type="text/javascript", src="/javascripts/bootstrap.min.js")
+	script(type="text/javascript", src="/socket.io/socket.io.js")
 	script(type="text/javascript", src="/javascripts/explorer.js")
 	link(rel="stylesheet", type="text/css", href="/stylesheets/bootstrap.min.css")
 	link(rel="stylesheet", type="text/css", href="/skin/ui.dynatree.css")
@@ -29,6 +30,11 @@ body
 							i.icon-user
 						button#btnDisconnect.btn(type="button", title="disconnect")
 							i.icon-off
+					ul.nav.pull-right
+						li
+							a(href="#") <span class="badge badge-info">0</span> watchers updates
+						li
+							a(href="#") sign out
 	
 	div#main.container
 		div.hero-unit.span12
@@ -40,6 +46,8 @@ body
 				div#tree
 			div.span6
 				div.btn-group.paddingBottom10
+					button#btnWatch.btn(type="button", title="watch for changes")
+						i.icon-eye-open
 					button#btnCreate.btn(type="button", title="add child node")
 						i.icon-plus-sign
 					button#btnRefresh.btn(type="button", title="refresh")
