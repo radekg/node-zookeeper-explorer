@@ -9,6 +9,16 @@ var express = require('express')
   , http = require('http')
   , path = require('path');
 
+var portToLaunchOn = 3000;
+for ( var i=2; i<process.argv.length; i+=2 ) {
+	if ( process.argv[i] == "--port" ) {
+		portToLaunchOn = process.argv[i+1] || portToLaunchOn;
+	}
+}
+if ( process.env.ZK_BROWSER_PORT ) {
+	portToLaunchOn = process.env.ZK_BROWSER_PORT;
+}
+
 var app = express();
 
 app.configure(function(){
@@ -48,7 +58,7 @@ app.post('/zk/watcher/remove', zk.watcherRemove);
 app.zookeepers = {};
 app.watchers = {};
 
-var server = app.listen(3000);
+var server = app.listen(portToLaunchOn);
 app.socketio = require("socket.io").listen(server);
 /*
 http.createServer(app).listen(app.get('port'), function(){

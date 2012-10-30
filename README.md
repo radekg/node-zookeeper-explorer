@@ -27,6 +27,11 @@ This app was built and tested with node 0.8.9.
 # Running
 
     node app
+    # or
+    node app --port 80 # you may need sudo here
+    # or
+    # set ZK_BROWSER_PORT environemnt variable and launch
+    node app
 
 And in the browser go to: [http://localhost:3000](http://localhost:3000)
 
