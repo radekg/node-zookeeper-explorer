@@ -49,7 +49,6 @@ Planned or existing:
 - multinode delete
 - watchers with auto-reload for current active node
 - watchers with notifications for any node
-- operation history with undo
 
 Full status can be check in [Issues](https://github.com/radekg/node-zookeeper-explorer/issues?state=open).
 
