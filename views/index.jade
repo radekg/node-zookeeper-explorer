@@ -8,9 +8,11 @@ html
 	script(type="text/javascript", src="/javascripts/bootstrap.min.js")
 	script(type="text/javascript", src="/socket.io/socket.io.js")
 	script(type="text/javascript", src="/javascripts/explorer.js")
+	script(type="text/javascript", src="/javascripts/poshytip.js")
 	link(rel="stylesheet", type="text/css", href="/stylesheets/bootstrap.min.css")
 	link(rel="stylesheet", type="text/css", href="/skin/ui.dynatree.css")
 	link(rel="stylesheet", type="text/css", href="/stylesheets/style.css")
+	link(rel="stylesheet", type="text/css", href="/stylesheets/tip-twitter.css")
 body
 	
 	div.navbar.navbar-fixed-top
@@ -32,7 +34,7 @@ body
 							i.icon-off
 					ul.nav.pull-right
 						li
-							a(href="#") <span class="badge badge-info">0</span> watchers updates
+							a#notifications(href="#") <span class="badge badge-info">0</span> watchers updates
 						li
 							a(href="#") sign out
 	

@@ -31,3 +31,15 @@ label {
 	overflow-y: scroll;
 	overflow-x: hidden;
 }
+.notifications-display {
+	width: 290px;
+	height: 200px;
+	clip: rect(0, 290px, 300px, 0);
+	overflow-y: scroll;
+	overflow-x: hidden;
+}
+.notifications-display span {
+	display: block;
+	padding: 3px 0 3px 0;
+	border-bottom: 1px solid #999;
+}

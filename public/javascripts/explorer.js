@@ -20,11 +20,11 @@ $(function() {
 		if ( data.session == currentSession && data.connection == currentConnection ) {
 			if ( getPathFromRoot( treeSelectedNode ) == data.path ) {
 				$("#btnRefresh").trigger("click");
-				notifications.unshift({ message: "Children for " + data.path + " have changed.", seen: false });
-				updateNotSeenCounter();
+				notifications.unshift({ message: "Children for <strong>" + data.path + "</strong> have changed.", seen: false });
+				updateNotifications();
 			} else {
-				notifications.unshift({ message: "Children for " + data.path + " have changed.", seen: false });
-				updateNotSeenCounter();
+				notifications.unshift({ message: "Children for <strong>" + data.path + "</strong> have changed.", seen: false });
+				updateNotifications();
 			}
 		}
 	});
@@ -32,11 +32,11 @@ $(function() {
 		if ( data.session == currentSession && data.connection == currentConnection ) {
 			if ( getPathFromRoot( treeSelectedNode ) == data.path ) {
 				loadNodeStatsAndData( treeSelectedNode );
-				notifications.unshift({ message: "Data for " + data.path + " has changed.", seen: false });
-				updateNotSeenCounter();
+				notifications.unshift({ message: "Data for <strong>" + data.path + "</strong> has changed.", seen: false });
+				updateNotifications();
 			} else {
-				notifications.unshift({ message: "Data for " + data.path + " has changed.", seen: false });
-				updateNotSeenCounter();
+				notifications.unshift({ message: "Data for <strong>" + data.path + "</strong> has changed.", seen: false });
+				updateNotifications();
 			}
 		}
 	});
@@ -172,6 +172,36 @@ $(function() {
 		}
 	});
 	
+	$("#notifications").poshytip({
+		className: 'tip-twitter',
+		bgImageFrameSize: 11,
+		alignX: 'inner-left',
+		alignY: 'bottom',
+		offsetY: 20,
+		offsetX: -123,
+		content: function(updateCallback) {
+			if ( notifications.length == 0 ) {
+				return "No notifications available.";
+			} else {
+				var container = $('<div/>').addClass('notifications-display');
+				$.each(notifications, function(i, notification) {
+					$('<span/>')
+						.html(notification.message+"<br/>")
+						.appendTo(container);
+				});
+				return container;
+			}
+		}
+	});
+	$("#notifications").click(function(event) {
+		event.preventDefault();
+	});
+	$("#notifications").mouseover(function(event) {
+		notifications.forEach(function(notification) {
+			notification.seen = true;
+		});
+		updateNotifications();
+	})
 });
 
 function getPathFromRoot(node) {
@@ -453,7 +483,7 @@ function setConnectionHistory(hosts) {
 	}
 }
 
-function updateNotSeenCounter() {
+function updateNotifications() {
 	var count = 0;
 	notifications.forEach(function(item) {
 		if ( !item.seen ) {
