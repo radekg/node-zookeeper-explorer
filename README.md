@@ -7,7 +7,6 @@
 - [socket.io](http://socket.io)
 - [node-uuid](https://github.com/broofa/node-uuid)
 - [js-yaml](https://github.com/nodeca/js-yaml)
-
 - [jQuery](http://jquery.com)
 - [jQuery cookie](https://github.com/carhartl/jquery-cookie)
 - [Twitter Bootstrap](http://twitter.github.com/bootstrap/)
