@@ -12,6 +12,7 @@ var currentConnection;
 var socket;
 
 var notifications = [];
+var navigateQueue = [];
 
 $(function() {
 	
@@ -76,13 +77,31 @@ $(function() {
 			}
 		});
 	});
-	$("#navBtn").click(function() {
+	$("#btnNavigate").click(function() {
+		if ( $("#navigate").val() == "" ) {
+			$("#navigate").val("/");
+		}
 		if ( $("#navigate").val().indexOf("/") != 0 ) {
 			displayError("Path " + $("#navigate").val() + " is incorrect.");
 		}
 		exists($("#navigate").val(), function(data) {
 			if ( data.exists ) {
-				alert("Handle exists...");
+				if ( data.path == "/" ) {
+					$("#tree").dynatree("getTree").getRoot().activate();
+				} else {
+					var path = data.path.substr(1, data.path.length); // remove / from the beginning...
+					var pathParts = path.split("/");
+					var children = $("#tree").dynatree("getTree").getRoot().getChildren();
+					children.forEach(function(child) {
+						if ( child.data.title == pathParts[0] ) {
+							pathParts.shift();
+							navigateQueue = pathParts;
+							child.activate();
+							child.expand();
+						}
+					});
+				}
+				
 			} else {
 				displayError("Path " + $("#navigate").val() + " does not exist.")
 			}
@@ -354,6 +373,18 @@ function constructNewTree() {
 						result.children.forEach(function(child) {
 							node.addChild({ isFolder: true, title: child, children: [ { title: "loading...", hideCheckbox: true } ] });
 						});
+						
+						if ( navigateQueue.length > 0 ) {
+							var item = navigateQueue.shift();
+							console.log(item);
+							var children = node.getChildren();
+							children.forEach(function(child) {
+								if ( child.data.title == item ) {
+									child.activate();
+									child.expand();
+								}
+							});
+						}
 					}
 				});
 			},

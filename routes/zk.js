@@ -75,7 +75,7 @@ exports.children = function(req, res) {
 
 exports.exists = function(req, res) {
 	app.zookeepers[ req.session.uuid ][ req.session.currentConnection ].a_exists(req.param("path"), null, function(rc,error,stat) {
-		res.json({ exists: stat!=null });
+		res.json({ exists: stat!=null, path: req.param("path") });
 	})
 };
 
