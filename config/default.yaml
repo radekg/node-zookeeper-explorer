@@ -1,0 +1,4 @@
+Auth:
+  requiresAuthentication: true
+  username: admin
+  password: admin1234

@@ -11,5 +11,6 @@
     "node-uuid": "*",
     "zookeeper": ">=3.4.1-4",
     "socket.io": "*"
+    "js-yaml": "*"
   }
 }

@@ -4,7 +4,7 @@ Array.prototype.remove = function(from, to) {
 	return this.push.apply(this, rest);
 };
 
-var treeSelectedNodes;
+var treeSelectedNodes = [];
 var treeSelectedNode;
 
 var currentSession;
@@ -135,8 +135,10 @@ $(function() {
 					$("#node").empty();
 					$("#node").append("<p>No node selected.</p>");
 					displaySuccess("Node " + data.path + " removed.");
-				} else {
+				} else if ( data.error == "not_empty" ) {
 					displayError("Path " + data.path +" isn't empty. Not removed.");
+				} else if ( data.error == "no_auth" ) {
+					displayError("You have to authenticated to remove the node.");
 				}
 			});
 		}
@@ -188,6 +190,17 @@ $(function() {
 		} else {
 			$(this).addClass("active");
 			watcherRegister( getPathFromRoot( (treeSelectedNode == null ? $("#tree").dynatree('getRoot') : treeSelectedNode ) ) );
+		}
+	});
+	
+	$("#btnAuth").click(function() {
+		if ( $(this).hasClass("active") ) {
+			$(this).removeClass("active");
+			$.post("/logout", {}, function (data) {
+				displaySuccess("You have logged out.");
+			});
+		} else {
+			displayLoginForm();
 		}
 	});
 	
@@ -254,6 +267,12 @@ function displayUnsafeDeleteConfirmation() {
 		+ "</div>");
 	$("#btnUnsafeDeleteConfirm").click(function() {
 		deleteUnsafe( getPathFromRoot( treeSelectedNode ), function(data) {
+			
+			if ( data.error == "no_auth" ) {
+				displayError("You have to authenticated to remove the node.");
+				return;
+			}
+			
 			var parent = treeSelectedNode.parent;
 			treeSelectedNode.parent.removeChild(treeSelectedNode);
 			if ( !parent.hasChildren() ) {
@@ -267,6 +286,53 @@ function displayUnsafeDeleteConfirmation() {
 	});
 	$("#btnUnsafeDeleteCancel").click(function() {
 		$(".unsafe-confirm").remove();
+	});
+}
+
+function displayLoginForm() {
+	$(".alert").remove();
+	$("#main").prepend("<div class='alert alert-block alert-success login-box'>"
+		+ "<h4>Authenticate</h4>"
+		+ "Administrative username: <input type='text' id='username' placeholder='username' />, password: <input type='password' id='password' placeholder='password' /><br/>"
+		+ "<button id='btnLogin' class='btn btn-primary' type='button'>Login</button> "
+		+ "<button id='btnLoginCancel' class='btn' type='button'>Cancel</button>"
+		+ "</div>");
+	setTimeout(function() {
+		$("#username").focus();
+		$("#username").keydown(function(event) {
+			if ( event.which == 13 ) {
+				$("#btnLogin").trigger('click');
+			}
+			if ( event.which == 27 ) {
+				$("#btnLoginCancel").trigger('click');
+			}
+		});
+		$("#password").keydown(function(event) {
+			if ( event.which == 13 ) {
+				$("#btnLogin").trigger('click');
+			}
+			if ( event.which == 27 ) {
+				$("#btnLoginCancel").trigger('click');
+			}
+		});
+	}, 100);
+	
+	$("#btnLogin").click(function() {
+		if ($("#username").val() == "" || $("#password").val() == "") {
+			displayError("Credentials required.");
+		} else {
+			$.post("/login", { username: $("#username").val(), password: $("#password").val() }, function (data) {
+				if ( data.status == "ok" ) {
+					displaySuccess("You are now authenticated.");
+					$("#btnAuth").addClass("active");
+				} else {
+					displayError("Username or password incorrect.");
+				}
+			});
+		}
+	});
+	$("#btnLoginCancel").click(function() {
+		$(".login-box").remove();
 	});
 }
 
@@ -301,7 +367,11 @@ function displayNewNodeForm() {
 					displaySuccess("Node " + data.path + " created sucessfully.");
 					$("#btnRefresh").trigger("click");
 				} else {
-					displayError("Node " + data.path + " not created. Source error: '" + data.error + "'.");
+					if ( data.error == "no_auth" ) {
+						displayError("You have to authenticated to remove the node.");
+					} else {
+						displayError("Node " + data.path + " not created. Source error: '" + data.error + "'.");
+					}
 				}
 			});
 		}
@@ -339,7 +409,11 @@ function displayDataModificationForm(currentData, currentVersion) {
 				displaySuccess("Data for node " + data.path + " updated sucessfully.");
 				loadNodeStatsAndData(treeSelectedNode);
 			} else {
-				displayError("Data for node " + data.path + " not updated. Source error: '" + data.error + "'.");
+				if ( data.error == "no_auth" ) {
+					displayError("You have to authenticated to remove the node.");
+				} else {
+					displayError("Data for node " + data.path + " not updated. Source error: '" + data.error + "'.");
+				}
 			}
 		});
 	});
