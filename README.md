@@ -1,10 +1,13 @@
 # Zookeeper explorer for NodeJS
 
-Zookeeper management web application for NodeJS. Implemented with:
+[Zookeeper](http://zookeeper.apache.org) management web application for [node.js](http://nodejs.org). Implemented with:
 
-- [expressjs](http://expressjs.com/)
+- [expressjs](http://expressjs.com/) and [jade](http://jade-lang.com)
 - [node-zookeeper](https://github.com/yfinkelstein/node-zookeeper)
 - [socket.io](http://socket.io)
+- [node-uuid](https://github.com/broofa/node-uuid)
+- [js-yaml](https://github.com/nodeca/js-yaml)
+
 - [jQuery](http://jquery.com)
 - [jQuery cookie](https://github.com/carhartl/jquery-cookie)
 - [Twitter Bootstrap](http://twitter.github.com/bootstrap/)
@@ -12,10 +15,6 @@ Zookeeper management web application for NodeJS. Implemented with:
 - [poshytip](https://github.com/vadikom/poshytip)
 
 # Installation
-
-    npm install node-zookeeper-explorer
-
-Or from sources:
 
     mkdir node-zookeeper-explorer
     cd node-zookeeper-explorer
@@ -39,20 +38,21 @@ And in the browser go to: [http://localhost:3000](http://localhost:3000) or what
 
 Planned or existing:
 
+- single user authentication
+- ability to disable authentication requirement
 - lazy loading
 - connection history
-- mutiuser / multisession: more than one connection can be opened on the server side
-- connection expiry on inactivity
-- create, delete nodes, edit node data
-- recursive delete
-- recursive node create
-- multinode delete
 - watchers with auto-reload for current active node
 - watchers with notifications for any node
-
-Full status can be check in [Issues](https://github.com/radekg/node-zookeeper-explorer/issues?state=open).
+- mutiuser / multisession: more than one connection can be opened on the server side for the same session
+- create new nodes, create nested nodes
+- delete nodes, recursive delete, delete more than one node
+- edit node data
 
 # License
 
-MIT
-unless stated otherwise in an appropriate file.
+MIT, unless stated otherwise in an appropriate file.
+
+# Authors
+
+- [Rad Gruchalski](https://github.com/radekg/)
