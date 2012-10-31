@@ -132,9 +132,6 @@ exports.deleteUnsafe = function(req, res) {
 		}
 	}
 	
-	res.json({ status: "error", error: "no_auth" });
-	return;
-	
 	_$deregisterFromZooKeeper(app.zookeepers[ req.session.uuid ][ req.session.currentConnection ], req.param("path"), function() {
 		res.json({ status: "ok", path: req.param("path") });
 	});

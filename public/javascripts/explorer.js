@@ -16,6 +16,12 @@ var navigateQueue = [];
 
 $(function() {
 	
+	$.getJSON("/isLoggedIn", function(data) {
+		if ( data.status == true ) {
+			$("#btnAuth").addClass("active");
+		}
+	});
+	
 	socket = io.connect(location.protocol+"//"+location.hostname+(location.port=="")?"":":"+location.port);
 	socket.on("watcher_children", function(data) {
 		if ( data.session == currentSession && data.connection == currentConnection ) {
@@ -121,30 +127,95 @@ $(function() {
 		updateNotSeenCounter();
 	});
 	$("#btnDeleteSafe").click(function() {
-		if ( treeSelectedNode == null ) {
-			displayError("No active node. Nothing to delete.");
-		} else {
-			deleteSafe( getPathFromRoot( treeSelectedNode ), function( data) {
-				if ( data.status == "ok" ) {
-					var parent = treeSelectedNode.parent;
-					treeSelectedNode.parent.removeChild(treeSelectedNode);
-					if ( !parent.hasChildren() ) {
-						parent.addChild({ isFolder: false, title: "no children", hideCheckbox: true });
+		
+		if ( treeSelectedNodes.length == 0 ) {
+			if ( treeSelectedNode == null ) {
+				displayError("No active node. Nothing to delete.");
+			} else {
+				deleteSafe( getPathFromRoot( treeSelectedNode ), function( data) {
+					if ( data.status == "ok" ) {
+						var parent = treeSelectedNode.parent;
+						treeSelectedNode.parent.removeChild(treeSelectedNode);
+						if ( !parent.hasChildren() ) {
+							parent.addChild({ isFolder: false, title: "no children", hideCheckbox: true });
+						}
+						treeSelectedNode = null;
+						$("#node").empty();
+						$("#node").append("<p>No node selected.</p>");
+						displaySuccess("Node " + data.path + " removed.");
+					} else if ( data.error == "not_empty" ) {
+						displayError("Path " + data.path +" isn't empty. Not removed.");
+					} else if ( data.error == "no_auth" ) {
+						displayError("You have to authenticated to remove the node.");
 					}
-					treeSelectedNode = null;
-					$("#node").empty();
-					$("#node").append("<p>No node selected.</p>");
-					displaySuccess("Node " + data.path + " removed.");
-				} else if ( data.error == "not_empty" ) {
-					displayError("Path " + data.path +" isn't empty. Not removed.");
-				} else if ( data.error == "no_auth" ) {
-					displayError("You have to authenticated to remove the node.");
-				}
-			});
+				});
+			}
+		} else {
+			var tested = 0;
+			var nonEmpty = [];
+			var empty = [];
+			treeSelectedNodes.forEach(function(node) {
+				var path = getPathFromRoot( node );
+				get(path, function(data) {
+					tested++;
+					if ( data.stat.numChildren > 0 ) {
+						nonEmpty.push( data.path );
+					} else {
+						empty.push( node );
+					}
+					if ( tested == treeSelectedNodes.length ) {
+						if ( nonEmpty.length > 0 ) {
+							var err = "Operation could not be cpompleted, following nodes are not empty:<ul>";
+							nonEmpty.forEach(function(n, index) {
+								if ( index < 5 ) {
+									err += "<li>" + n + "</li>";
+								}
+								if ( index == 4 ) {
+									err += "<li>... and " + (nonEmpty.length-5) + " more</li>";
+								}
+							})
+							err += "</ul>";
+							displayError(err);
+						} else {
+							var deleted = 0;
+							var notDeleted = 0;
+							var notAuthenticated = 0;
+							empty.forEach(function(n) {
+								deleteSafe( getPathFromRoot( n ), function( data) {
+									if ( data.status == "ok" ) {
+										var parent = n.parent;
+										n.parent.removeChild(n);
+										if ( !parent.hasChildren() ) {
+											parent.addChild({ isFolder: false, title: "no children", hideCheckbox: true });
+										}
+										deleted++;
+									} else if ( data.error == "not_empty" ) {
+										notDeleted++;
+									} else if ( data.error == "no_auth" ) {
+										notAuthenticated++;
+										notDeleted++;
+									}
+									if ( notDeleted+deleted == empty.length ) {
+										if ( notAuthenticated > 0 ) {
+											displayError("Nodes could not be deleted, you need to authenticate first.");
+										} else {
+											if ( notDeleted > 0 ) {
+												displayWarning(deleted + " node(s) successfully deleted but " + notDeleted + " could not be deleted.");
+											} else {
+												displaySucess(deleted + " node(s) successfully deleted.");
+											}
+										}
+									}
+								});
+							});
+						}
+					}
+				});
+			})
 		}
 	});
 	$("#btnDeleteUnsafe").click(function() {
-		if ( treeSelectedNode == null ) {
+		if ( treeSelectedNode == null && treeSelectedNodes.length == 0 ) {
 			displayError("No active node. Nothing to delete.");
 		} else {
 			displayUnsafeDeleteConfirmation();
@@ -257,32 +328,66 @@ function displaySuccess( message ) {
 	$(".alert").remove();
 	$("#main").prepend("<div class='alert alert-success'><button type='button' class='close' data-dismiss='alert'>x</button><strong>"+message+"</strong></div>");
 }
+function displayWarning( message ) {
+	$(".alert").remove();
+	$("#main").prepend("<div class='alert alert-block'><button type='button' class='close' data-dismiss='alert'>x</button><strong>"+message+"</strong></div>");
+}
 function displayUnsafeDeleteConfirmation() {
 	$(".alert").remove();
 	$("#main").prepend("<div class='alert alert-block unsafe-confirm'>"
 		+ "<h4>Warning</h4>"
-		+ "You are about to remove a node that may contain one or more children. Are you sure you want to continue?<br/>"
+		+ (treeSelectedNodes.length
+			? "You are about to remove " + treeSelectedNodes.length + " nodes that may contain one or more children. Are you sure you want to continue?<br/>"
+			: "You are about to remove a node that may contain one or more children. Are you sure you want to continue?<br/>" )
 		+ "<button id='btnUnsafeDeleteConfirm' class='btn btn-warning' type='button'>Yes, delete</button> "
 		+ "<button id='btnUnsafeDeleteCancel' class='btn' type='button'>Cancel</button>"
 		+ "</div>");
 	$("#btnUnsafeDeleteConfirm").click(function() {
-		deleteUnsafe( getPathFromRoot( treeSelectedNode ), function(data) {
-			
-			if ( data.error == "no_auth" ) {
-				displayError("You have to authenticated to remove the node.");
-				return;
-			}
-			
-			var parent = treeSelectedNode.parent;
-			treeSelectedNode.parent.removeChild(treeSelectedNode);
-			if ( !parent.hasChildren() ) {
-				parent.addChild({ isFolder: false, title: "no children", hideCheckbox: true });
-			}
-			treeSelectedNode = null;
-			$("#node").empty();
-			$("#node").append("<p>No node selected.</p>");
-			displaySuccess("Node " + data.path + " removed with children.");
-		});
+		
+		if ( treeSelectedNodes.length == 0 ) {
+			deleteUnsafe( getPathFromRoot( treeSelectedNode ), function(data) {
+				if ( data.error == "no_auth" ) {
+					displayError("You have to authenticated to remove the node.");
+					return;
+				}
+				var parent = treeSelectedNode.parent;
+				treeSelectedNode.parent.removeChild(treeSelectedNode);
+				if ( !parent.hasChildren() ) {
+					parent.addChild({ isFolder: false, title: "no children", hideCheckbox: true });
+				}
+				treeSelectedNode = null;
+				$("#node").empty();
+				$("#node").append("<p>No node selected.</p>");
+				displaySuccess("Node " + data.path + " removed with children.");
+			});
+		} else {
+			var deleted = 0;
+			var notDeleted = 0;
+			var notAuthenticated = 0;
+			treeSelectedNodes.forEach(function(node) {
+				deleteUnsafe( getPathFromRoot( node ), function(data) {
+					if ( data.error == "no_auth" ) {
+						notDeleted++;
+						notAuthenticated++;
+					} else {
+						deleted++;
+						var parent = node.parent;
+						node.parent.removeChild(node);
+						if ( !parent.hasChildren() ) {
+							parent.addChild({ isFolder: false, title: "no children", hideCheckbox: true });
+						}
+					}
+					if ( deleted + notDeleted == treeSelectedNodes.length ) {
+						if ( notAuthenticated > 0 ) {
+							displayError("Nodes could not be deleted, you need to authenticate first.");
+						} else {
+							displaySuccess(deleted + " node(s) successfully deleted.");
+						}
+					}
+				});
+			});
+		}
+		
 	});
 	$("#btnUnsafeDeleteCancel").click(function() {
 		$(".unsafe-confirm").remove();

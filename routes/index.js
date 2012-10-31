@@ -26,3 +26,7 @@ exports.logout = function(req, res) {
 	req.session.authenticated = false;
 	res.send({ status: "ok" });
 };
+
+exports.isLoggedIn = function(req, res) {
+	res.send({ status: req.session.authenticated == true });
+};
