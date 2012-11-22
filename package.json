@@ -1,16 +1,23 @@
 {
-  "name": "application-name",
-  "version": "0.0.1",
-  "private": true,
+  "name": "node-zookeeper-explorer",
+  "description": "A node Zookeeper Explorer",
+  "version": "1.0.0",
+  "author": "Rad Gruchalski <radek@gruchalski.com>, http://gruchalski.com",
+  "homepage": "https://github.com/radekg/node-zookeeper-explorer",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/radekg/node-zookeeper-explorer.git"
+  },
   "scripts": {
-    "start": "node app"
+    "start": "node ./app"
   },
   "dependencies": {
     "express": ">=3.0",
     "jade": "*",
     "node-uuid": "*",
     "zookeeper": ">=3.4.1-4",
-    "socket.io": "*"
+    "socket.io": "*",
     "js-yaml": "*"
-  }
+  },
+  "license": "MIT"
 }
