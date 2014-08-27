@@ -134,7 +134,7 @@ exports.deleteUnsafe = function(req, res) {
 	
 	_$deregisterFromZooKeeper(app.zookeepers[ req.session.uuid ][ req.session.currentConnection ], req.param("path"), function() {
 		res.json({ status: "ok", path: req.param("path") });
-	}, null, 0);
+	});
 }
 
 exports.create = function(req, res) {
@@ -231,6 +231,7 @@ var _$createNode = function(zk, parent, newnode, callback) {
 
 
 var _$deregisterFromZooKeeper = function(zk, path, callback, workingPath, depth) {
+	depth = ( depth == undefined ) ? 0 : depth;
 	var currentPath = workingPath || path;
 	zk.a_get_children(currentPath, false, function(rc, error, data) {
 		if ( data != null ) {
