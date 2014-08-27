@@ -134,7 +134,7 @@ exports.deleteUnsafe = function(req, res) {
 	
 	_$deregisterFromZooKeeper(app.zookeepers[ req.session.uuid ][ req.session.currentConnection ], req.param("path"), function() {
 		res.json({ status: "ok", path: req.param("path") });
-	});
+	}, null, 0);
 }
 
 exports.create = function(req, res) {
@@ -229,22 +229,24 @@ var _$createNode = function(zk, parent, newnode, callback) {
 	});
 }
 
-var _$deregisterFromZooKeeper = function(zk, path, callback, workingPath) {
+
+var _$deregisterFromZooKeeper = function(zk, path, callback, workingPath, depth) {
 	var currentPath = workingPath || path;
 	zk.a_get_children(currentPath, false, function(rc, error, data) {
 		if ( data != null ) {
 			if ( data.length > 0 ) {
 				for ( var i=0; i<data.length; i++ ) {
-					_$deregisterFromZooKeeper( zk, path, callback, currentPath + "/" + data[i] );
+					_$deregisterFromZooKeeper( zk, path, callback, currentPath + "/" + data[i] , depth+1);
 				}
 				zk.a_delete_(currentPath, -1, function() {})
 			} else {
 				zk.a_delete_(currentPath, -1, function() {})
 			}
-			_$deregisterFromZooKeeper(zk, path, callback);
-		} else {
-			callback();
-		}
+			_$deregisterFromZooKeeper(zk, path, callback, null, depth+1);
+		} 
 	});
+	if(depth==0 && callback) {
+		callback();
+	}
 }
 
