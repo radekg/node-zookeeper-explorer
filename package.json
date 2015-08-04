@@ -12,10 +12,10 @@
     "start": "node ./app"
   },
   "dependencies": {
-    "express": ">=3.0",
+    "express": ">=3.0 < 4.0",
     "jade": "*",
     "node-uuid": "*",
-    "zookeeper": ">=3.4.1-4",
+    "zookeeper": ">=3.4.6-5",
     "socket.io": "*",
     "js-yaml": "*"
   },
